@@ -31,5 +31,7 @@ postgres=# \d
 postgres=# \d [TableName]
 ```
 
-Postgres has a number of different [data types](https://www.postgresql.org/docs/9.5/datatype.html)
-to learn about.
+Data types to evaluate:
+
+- [Postgres datatypes](https://www.postgresql.org/docs/9.5/datatype.html)
+- [MySQL datatypes](https://dev.mysql.com/doc/refman/8.0/en/data-types.html)
