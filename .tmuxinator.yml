@@ -1,0 +1,9 @@
+name: sql-fundamentals
+root: <%= Dir.pwd %>
+
+windows:
+  - frontend:
+      layout: main-vertical
+      panes:
+        - vim
+        - npm start
