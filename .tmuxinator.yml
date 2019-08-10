@@ -6,4 +6,5 @@ windows:
       layout: main-vertical
       panes:
         - vim
-        - npm start
+        - docker-compose up
+        - docker-compose exec sql_fundamentals psql -U postgres
