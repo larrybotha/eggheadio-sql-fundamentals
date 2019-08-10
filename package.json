@@ -1,0 +1,25 @@
+{
+  "name": "eggheadio-sql-fundamentals",
+  "version": "1.0.0",
+  "description": "Notes and annotations from Egghead's SQL Fundamentals course: https://egghead.io/courses/sql-fundamentals",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/larrybotha/eggheadio-sql-fundamentals.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/larrybotha/eggheadio-sql-fundamentals/issues"
+  },
+  "homepage": "https://github.com/larrybotha/eggheadio-sql-fundamentals#readme",
+  "devDependencies": {
+    "doctoc": "^1.4.0",
+    "husky": "^3.0.3",
+    "lint-staged": "^9.2.1"
+  }
+}
