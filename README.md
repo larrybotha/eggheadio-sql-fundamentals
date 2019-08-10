@@ -7,6 +7,7 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
 **Table of Contents**
 
 - [2. Create a Table with SQL Create](#2-create-a-table-with-sql-create)
+- [.3 Add Data to a Table with SQL Insert](#3-add-data-to-a-table-with-sql-insert)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -35,3 +36,5 @@ Data types to evaluate:
 
 - [Postgres datatypes](https://www.postgresql.org/docs/9.5/datatype.html)
 - [MySQL datatypes](https://dev.mysql.com/doc/refman/8.0/en/data-types.html)
+
+## .3 Add Data to a Table with SQL Insert
