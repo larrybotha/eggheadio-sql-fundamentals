@@ -21,16 +21,14 @@ postgres=# CREATE TABLE Users (
 );
 ```
 
-To view tables in the database:
+To view tables in the current database
 
 ```bash
+-- view all tables in the current
 postgres=# \d
-```
 
-To view a specific table
-
-```bash
-postgres=# \d Users
+-- view a specific table
+postgres=# \d [TableName]
 ```
 
 Postgres has a number of different [data types](https://www.postgresql.org/docs/9.5/datatype.html)
