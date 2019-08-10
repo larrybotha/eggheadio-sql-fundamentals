@@ -7,4 +7,4 @@ windows:
       panes:
         - vim
         - docker-compose up
-        - docker-compose exec sql_fundamentals psql -U postgres
+        - sleep 2 && docker-compose exec sql_fundamentals psql -U postgres
