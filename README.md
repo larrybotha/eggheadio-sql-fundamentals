@@ -248,3 +248,77 @@ SELECT COUNT(DISTINCT(last_name)) as num_distinct_last_names FROM Users;
                        2
 (1 row)
 ```
+
+## 5. Update Data in a Table with SQL `UPDATE`
+
+Let's insert a user that happens to have a `user_handle` column that's the
+same as another:
+
+```sql
+INSERT INTO Users
+  (create_date, user_handle, last_name, first_name)
+  VALUES
+    (NOW(), 'bed706b0-9eee-48d1-a67c-236046bb1cb6', 'Mike', 'Turner');
+```
+
+We want `user_handle` to be unique for all users, so we need to update the
+user's handle so that it's distinct from our existing user.
+
+Postgres has a handy extension that we can make use of to automatically generate
+a uuid for us:
+
+``sql
+CREATE EXTENSION "uuid-ossp";
+CREATE EXTENSION
+```
+
+With this extension created, we can update the `Users` table:
+
+```sql
+UPDATE Users SET user_handle = uuid_generate_v4();
+--      [1]  [2]     [3]              [4]
+UPDATE 4
+
+-- [1] the table of the column we want to update
+-- [2] the SET keyword precedes the column name we want to update
+-- [3] the actual column that we want updated
+-- [4] the value we want to update the column to
+```
+
+As per the output, we can see that 4 rows were updated. This could lead to
+problems, as we may be destroying or changing data that shouldn't be changed. We
+should be using the `WHERE` clause to ensure we're changing only the column
+value of the specific row that should be changed.
+
+### Looping commands
+
+The following commands are looping commands:
+
+- `SELECT`
+- `UPDATE`
+- `DELETE`
+
+These commands will loop over all matching rows, so if we aren't careful, and we
+don't filter rows by only those we explicitly want affected by these commands,
+we could end up changing or removing critical data.
+
+For the above command we _should_ have instead used:
+
+```sql
+UPDATE Users SET user_handle = uuid_generate_v4() WHERE last_name = 'Turner';
+```
+
+Unless a condition is provided, a looping command will apply to every row.
+
+### Updating multiple columns
+
+`SET` can be passed multiple column names and values to assign in a single
+command:
+
+```sql
+UPDATE Users SET
+  user_handle = uuid_generate_v4(),
+  first_name = 'Danny'
+  WHERE
+    last_name = 'clark';
+```
