@@ -14,6 +14,9 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
   - [Aliasing columns in a query](#aliasing-columns-in-a-query)
   - [Query number of rows in the table](#query-number-of-rows-in-the-table)
   - [Filter by values](#filter-by-values)
+- [5. Update Data in a Table with SQL `UPDATE`](#5-update-data-in-a-table-with-sql-update)
+  - [Looping commands](#looping-commands)
+  - [Updating multiple columns](#updating-multiple-columns)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -209,7 +212,7 @@ SELECT COUNT(first_name) FROM Users;
 
 First, let's insert some data with columns that match our existing data:
 
-````sql
+```sql
 INSERT INTO Users
   (first_name, last_name, user_handle, create_date)
   VALUES
