@@ -58,15 +58,15 @@ postgres=# INSERT INTO Users
     (col_1, col_2, col_x, col_y)
     ```
 
-  This is not required, but is a best practice so that one knows where values
-  are being inserted.
+    This is not required, but is a best practice so that one knows where values
+    are being inserted.
 
-  Furthermore, not all values need to be provided, and values can be provided to
-  specific columns. By naming the specific columns that values are going to be
-  inserted into, we can specify any order for the columns.
+    Furthermore, not all values need to be provided, and values can be provided to
+    specific columns. By naming the specific columns that values are going to be
+    inserted into, we can specify any order for the columns.
 
-  Without specifying the columns, we need to insert values in the order in which
-  columns are defined for the table.
+    Without specifying the columns, we need to insert values in the order in which
+    columns are defined for the table.
 
 3. provide the values for the specified, preceding the values the `VALUES`
    keyword:
@@ -76,10 +76,10 @@ postgres=# INSERT INTO Users
             (2, 'John', 'turtle');
      ```
 
-   If values are inserted that don't match the data types the columns are
-   defined with, we'll get an error.
+    If values are inserted that don't match the data types the columns are
+    defined with, we'll get an error.
 
-   New sets of data are comma-separated.
+    New sets of data are comma-separated.
 
 We don't need to manually insert values, either; we can use built-in functions
 to generate values instead.
