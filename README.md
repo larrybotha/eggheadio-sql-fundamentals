@@ -270,7 +270,7 @@ user's handle so that it's distinct from our existing user.
 Postgres has a handy extension that we can make use of to automatically generate
 a uuid for us:
 
-``sql
+```sql
 CREATE EXTENSION "uuid-ossp";
 CREATE EXTENSION
 ```
