@@ -17,6 +17,10 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
 - [5. Update Data in a Table with SQL `UPDATE`](#5-update-data-in-a-table-with-sql-update)
   - [Looping commands](#looping-commands)
   - [Updating multiple columns](#updating-multiple-columns)
+- [6. Removing Data with SQL `DELETE`, `TRUNCATE`, and `DROP`](#6-removing-data-with-sql-delete-truncate-and-drop)
+  - [Deleting specific rows](#deleting-specific-rows)
+  - [Deleting all rows](#deleting-all-rows)
+  - [Remove the table from the database](#remove-the-table-from-the-database)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -325,3 +329,64 @@ UPDATE Users SET
   WHERE
     last_name = 'clark';
 ```
+
+## 6. Removing Data with SQL `DELETE`, `TRUNCATE`, and `DROP`
+
+### Deleting specific rows
+
+When removing rows from a table we use the `DELETE` command. As with `SELECT`
+and `UPDATE` it's a looping command, so if we don't provide a condition, we'll
+delete all rows in a table:
+
+```sql
+-- delete everything in the Users table
+DELETE FROM Users;
+
+-- delete only the rows that meet a condition
+DELETE FROM Users WHERE first_name = 'Joe';
+```
+
+We can combine conditions using `OR` or `AND`:
+
+```sql
+-- conjunction
+DELETE FROM Users
+WHERE
+  first_name = 'Joe' AND
+  last_name = 'Soap';
+
+-- disjunction
+DELETE FROM Users
+WHERE
+  first_nane = 'Joe' OR
+  first_name = 'John';
+```
+
+### Deleting all rows
+
+We could use `DELETE FROM Users` to delete all the rows of the `Users` table,
+but a more efficient way to remove all rows is by using `TRUNCATE`:
+
+```sql
+TRUNCATE Users;
+```
+
+`TRUNCATE` is more efficient as it doesn't iterate over each row; it simply
+removes all of them.
+
+`TRUNCATE` can also be used to remove rows from multiple tables by separating
+them with commas:
+
+```sql
+TRUNCATE Table1, Table2, ... ;
+```
+
+### Remove the table from the database
+
+`DROP` will remove a table completely from the database:
+
+```sql
+DROP Users;
+```
+
+A dropped table will not be able to be queried.
