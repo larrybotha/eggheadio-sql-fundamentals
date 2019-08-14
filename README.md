@@ -21,6 +21,12 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
   - [Deleting specific rows](#deleting-specific-rows)
   - [Deleting all rows](#deleting-all-rows)
   - [Remove the table from the database](#remove-the-table-from-the-database)
+- [7. Keep Data Integrity with Constraints](#7-keep-data-integrity-with-constraints)
+  - [Null values](#null-values)
+  - [`UNIQUE` constraint](#unique-constraint)
+  - [`FOREIGN` keys](#foreign-keys)
+  - [Adding constraints to already created tables](#adding-constraints-to-already-created-tables)
+  - [Viewing constraints](#viewing-constraints)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -386,7 +392,268 @@ TRUNCATE Table1, Table2, ... ;
 `DROP` will remove a table completely from the database:
 
 ```sql
-DROP Users;
+DROP TABLE Users;
 ```
 
 A dropped table will not be able to be queried.
+
+## 7. Keep Data Integrity with Constraints
+
+Constraints are a mechanism for connecting data between tables, help with
+maintaining integrity of data, and as a database scales, help to do so
+efficiently.
+
+Let's recreate our dropped table:
+
+```sql
+CREATE TABLE USERS (
+  create_date date,
+  user_handle uuid,
+  last_name text,
+  first_name text,
+  -- set user_handle as the primary key for the Users table
+  CONSTRAINT PK_users PRIMARY KEY (user_handle)
+  --  [1]      [2]          [3]        [4]
+);
+
+-- [1] CONSTRAINT keyword which allows one to name a constraint. If a name is
+       not given, most databases will generate one
+-- [2] the name of the constraint. We prefix it with PK_ to indicate that it's a
+       primary key
+-- [3] the type of constraint we are defining - in this case, a primary key
+-- [4] a list of columns used to define the primary key
+```
+
+A primary key is a column or a group of columns used to identify a row uniquely
+in a table. By setting a column as a `PRIMARY KEY`, it is automatically assigned
+to be `NOT NULL` and `UNIQUE` too (on Postgres, at least); rows inserted into this
+table must have the specified columns populated in order for the query to succeed.
+
+There are two ways to configure primary keys in tables:
+
+1. if only a single column will be used as a primary key, then the column can be
+   set in line
+
+    ```sql
+    CREATE TABLE MyTable (
+      -- id now has NOT NULL and UNIQUE constraints
+      id uiud PRIMARY KEY,
+      col_1 text,
+      -- ...
+    );
+    ```
+
+    This is called a _column constraint_.
+
+2. by using the `CONSTRAINT` keyword:
+
+    ```sql
+    CREATE TABLE MyTable (
+      id uuid,
+      col_2 text,
+      -- id now has NOT NULL and UNIQUE constraints
+      CONSTRAINT PK_id PRIMARY KEY (id)
+    );
+    ```
+
+    This is called a _table constraint_.
+
+    Multiple values can be used to create a primary key constraint:
+
+    ```sql
+    CREATE TABLE MyTable (
+      col_1 uuid,
+      col_2 text,
+      col_3 date,
+      -- col_1 and col_2 now have NOT NULL and UNIQUE constraints
+      CONSTRAINT PK_primary_key_name PRIMARY KEY (col_1, col2)
+    );
+    ```
+
+Because we now have a constraint on the `user_handle` column, if we attempted
+inserting two records with the same `user_handle` then we'd get an error:
+
+```sql
+INSERT INTO Users
+  (create_date, user_handle, last_name, first_name)
+  VALUES
+    (NOW(), 'b8a62e4e-5eb5-4fe7-a346-b768acab4a6d', 'Soap', 'Joe'),
+    (NOW(), 'b8a62e4e-5eb5-4fe7-a346-b768acab4a6d', 'Doe', 'John');
+ERROR:  duplicate key value violates unique constraint "pk_users"
+DETAIL:  Key (user_handle)=(b8a62e4e-5eb5-4fe7-a346-b768acab4a6d) already exists.
+```
+
+### Null values
+
+Null values can't be inserted into primary keys:
+
+```sql
+INSERT INTO Users
+  (create_date, user_handle, last_name, first_name)
+  VALUES
+    (NOW(), null, 'Soap', 'Joe');
+ERROR:  null value in column "user_handle" violates not-null constraint
+DETAIL:  Failing row contains (2019-08-14, null, Soap, Joe).
+```
+
+The `NOT NULL` constraint can be used for fields where a value must be provided,
+such as when a user signs up, and you require an email address:
+
+Let's drop our `Users` table and recreate it, adding a constraint to
+`first_name` and `last_name` to ensure values are provided when a record is
+inserted:
+
+```sql
+DROP TABLE Users;
+
+CREATE TABLE Users (
+  create_date date,
+  user_handle uuid,
+  first_name text NOT NULL,
+  last_name text NOT NULL,
+  CONSTRAINT PK_users PRIMARY KEY (user_handle)
+);
+```
+
+If we attempt to insert a record now where `first_name` or `last_name` are not
+provided, we'll get an error:
+
+```sql
+INSERT INTO Users
+  (create_date, user_handle, first_name, last_name)
+  VALUES
+    (NOW(), 'b8a62e4e-5eb5-4fe7-a346-b768acab4a6d', null, 'Soap');
+ERROR:  null value in column "first_name" violates not-null constraint
+DETAIL:  Failing row contains (2019-08-14, b8a62e4e-5eb5-4fe7-a346-b768acab4a6d, null, Soap).
+```
+
+Tyler recommends avoiding dealing with nulls in databases as much as possible,
+as they cause a lot of trouble.
+
+### `UNIQUE` constraint
+
+The `UNIQUE` constraint ensures that only a single record can hold any specific
+value within a table:
+
+```sql
+DROP TABLE Users;
+
+CREATE TABLE Users (
+  create_date date,
+  user_handle uuid NOT NULL UNIQUE,
+  first_name text NOT NULL,
+  last_name text NOT NULL
+);
+
+INSERT INTO Users
+  (create_date, user_handle, first_name, last_name)
+  VALUES
+    (NOW(), 'b8a62e4e-5eb5-4fe7-a346-b768acab4a6d', 'Joe', 'Soap'),
+    (NOW(), 'b8a62e4e-5eb5-4fe7-a346-b768acab4a6d', 'Joe', 'Soap');
+
+ERROR:  duplicate key value violates unique constraint "users_user_handle_key"
+DETAIL:  Key (user_handle)=(b8a62e4e-5eb5-4fe7-a346-b768acab4a6d) already exists.
+```
+
+Let's create our table in the desired state:
+
+```sql
+DROP TABLE Users;
+
+CREATE TABLE Users (
+  create_date date NOT NULL,
+  user_handle uuid PRIMARY KEY,
+  last_name text,
+  first_name text NOT NULL
+);
+```
+
+### `FOREIGN` keys
+
+We want to track when users make a purchase. A user who is not in our database
+should never be able to make a purchase.
+
+The following table would be incorrect, as any `uuid` could be supplied for a
+user:
+
+```
+CREATE TABLE Purchases (
+  create_date date NOT NULL,
+  user_handle uuid,
+  sku uuid NOT NULL,
+  quantity int NOT NULL
+);
+```
+
+To address this, one should add a foreign key constraint to a table:
+
+```sql
+CREATE TABLE Purchases (
+  create_date date NOT NULL,
+  -- create a column that has a foreign key constraint specifying that the value
+  -- must exist in the user_handle column of the Users table
+  user_handle uuid REFERENCES Users (user_handle),
+  sku uuid NOT NULL,
+  quantity int NOT NULL
+);
+```
+
+If we attempt to insert a purchase with a `uuid` that isn't in the `Users` table
+we get an error:
+
+```sql
+INSERT INTO Users
+  (create_date, user_handle, first_name)
+  VALUES
+    (NOW(), 'b8a62e4e-5eb5-4fe7-a346-b768acab4a6d', 'Joe');
+
+-- insert a purchase for a non-existent user
+INSERT INTO Purchases
+  (create_date, user_handle, sku, quantity)
+  VALUES
+    (NOW(), 'd7943f4b-2fda-44fd-94cf-6d72c37d6da7', '898162f1-8b6e-40e4-bd26-e264fa4ac01a', 1);
+ERROR:  insert or update on table "purchases" violates foreign key constraint "purchases_user_handle_fkey"
+DETAIL:  Key (user_handle)=(d7943f4b-2fda-44fd-94cf-6d72c37d6da7) is not present in table "users".
+
+-- insert a purchase for a valid user
+INSERT INTO Purchases
+  (create_date, user_handle, sku, quantity)
+  VALUES
+    (NOW(), 'b8a62e4e-5eb5-4fe7-a346-b768acab4a6d', '898162f1-8b6e-40e4-bd26-e264fa4ac01a', 1);
+-- INSERT 0 1
+```
+
+### Adding constraints to already created tables
+
+Using the `ALTER` keyword, one can add constraints to columns and tables that
+already exist.
+
+### Viewing constraints
+
+To see the constraints and references in Postgres:
+
+```sql
+postgres=# \d Users;
+      Table "public.users"
+   Column    | Type | Modifiers
+-------------+------+-----------
+ create_date | date | not null
+ user_handle | uuid | not null
+ last_name   | text |
+ first_name  | text | not null
+Indexes:
+    "users_pkey" PRIMARY KEY, btree (user_handle)
+Referenced by:
+    TABLE "purchases" CONSTRAINT "purchases_user_handle_fkey" FOREIGN KEY (user_handle) REFERENCES users(user_handle)
+
+postgres=# \d Purchases
+     Table "public.purchases"
+   Column    |  Type   | Modifiers
+-------------+---------+-----------
+ create_date | date    | not null
+ user_handle | uuid    |
+ sku         | uuid    | not null
+ quantity    | integer | not null
+Foreign-key constraints:
+    "purchases_user_handle_fkey" FOREIGN KEY (user_handle) REFERENCES users(user_handle)
+```
