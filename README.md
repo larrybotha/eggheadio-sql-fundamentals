@@ -31,6 +31,7 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
   - [Creating an index](#creating-an-index)
   - [Remove an index](#remove-an-index)
   - [When not to use indexes](#when-not-to-use-indexes)
+- [9. Select Grouped and Aggregated Data with SQL](#9-select-grouped-and-aggregated-data-with-sql)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -754,3 +755,5 @@ It's best to avoid indexes for tables that:
 - are small
 - have frequent or large batch updates
 - have columns that are frequently updated
+
+## 9. Select Grouped and Aggregated Data with SQL
