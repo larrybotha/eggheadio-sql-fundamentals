@@ -27,6 +27,10 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
   - [`FOREIGN` keys](#foreign-keys)
   - [Adding constraints to already created tables](#adding-constraints-to-already-created-tables)
   - [Viewing constraints](#viewing-constraints)
+- [8. Organize Table Data with Indexes](#8-organize-table-data-with-indexes)
+  - [Creating an index](#creating-an-index)
+  - [Remove an index](#remove-an-index)
+  - [When not to use indexes](#when-not-to-use-indexes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -657,3 +661,96 @@ postgres=# \d Purchases
 Foreign-key constraints:
     "purchases_user_handle_fkey" FOREIGN KEY (user_handle) REFERENCES users(user_handle)
 ```
+
+## 8. Organize Table Data with Indexes
+
+Like the index in a book, database indexes help organise data that may be
+frequently accessed, and for which we want to find information in an optimised
+manner.
+
+An analogy is how the index in a book may contain a specific word that is
+important to the reader, and it then lists the pages on which that word is found
+or defined.
+
+With this thinking, its important for the author / editor of the book to
+determine what is actually important to the reader so that those words are added
+to the index. Too many words that aren't important will slow the reader down in
+their search.
+
+A database index is similar - the developer needs to determine which values are
+important to index.
+
+### Creating an index
+
+Let's say that we query user data primarily by `user_handle`. `user_handle` may
+be valuable to create an index from so that we can improve performance on
+queries:
+
+```sql
+CREATE INDEX users_user_handle_index ON Users (user_handle);
+--   [1]      [2]     [3]       [4]      [5]       [6]
+
+-- [1] keywords to create an index
+-- [2] the name of the index, which is a good idea to name something that will
+       make sense. We start with the table to which the index belongs
+-- [3] followed by the column from which the index is derived
+-- [4] and append `_index` so that it's obvious to anyone that they are working
+       with an index
+-- [5] specify the table the index is for
+-- [6] specify the column or columns the index is built from
+```
+
+We can see the indexes on tables using Postgres's `\d` command:
+
+```sql
+postgres=# \d Users;
+      Table "public.users"
+   Column    | Type | Modifiers
+-------------+------+-----------
+ create_date | date | not null
+ user_handle | uuid | not null
+ last_name   | text |
+ first_name  | text | not null
+Indexes:
+    "users_pkey" PRIMARY KEY, btree (user_handle)
+    "users_user_handle_index" btree (user_handle)
+Referenced by:
+    TABLE "purchases" CONSTRAINT "purchases_user_handle_fkey" FOREIGN KEY (user_handle) REFERENCES users(user_handle)
+```
+
+Indexes that use multiple columns work only for queries that use the `AND`
+keyword and both columns are used in the conjunction.
+
+### Remove an index
+
+We use the `DROP` keyword to remove indexes:
+
+```sql
+DROP INDEX users_user_handle_index;
+
+\d Users;
+      Table "public.users"
+   Column    | Type | Modifiers
+-------------+------+-----------
+ create_date | date | not null
+ user_handle | uuid | not null
+ last_name   | text |
+ first_name  | text | not null
+Indexes:
+    "users_pkey" PRIMARY KEY, btree (user_handle)
+Referenced by:
+    TABLE "purchases" CONSTRAINT "purchases_user_handle_fkey" FOREIGN KEY (user_handle) REFERENCES users(user_handle)
+```
+
+### When not to use indexes
+
+Indexes enhance performance, but they can also hurt performance. With Postgres,
+indexes can be built in parallel to looksups, i.e. `SELECT` queries, but are run
+prior to `UPDATE`, `INSERT`, and `DELETE` queries, which can decrease
+performance.
+
+It's best to avoid indexes for tables that:
+
+- are small
+- have frequent or large batch updates
+- have columns that are frequently updated
