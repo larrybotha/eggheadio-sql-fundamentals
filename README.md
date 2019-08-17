@@ -32,6 +32,13 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
   - [Remove an index](#remove-an-index)
   - [When not to use indexes](#when-not-to-use-indexes)
 - [9. Select Grouped and Aggregated Data with SQL](#9-select-grouped-and-aggregated-data-with-sql)
+  - [Grouping columns with unique content](#grouping-columns-with-unique-content)
+  - [Adding column names to a `GROUP BY` query to make results more descriptive](#adding-column-names-to-a-group-by-query-to-make-results-more-descriptive)
+  - [Grouping by multiple columns](#grouping-by-multiple-columns)
+  - [Built-in aggregate functions](#built-in-aggregate-functions)
+    - [`MIN`](#min)
+    - [`MAX`](#max)
+  - [Aggregate functions and multiple columns](#aggregate-functions-and-multiple-columns)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -784,17 +791,124 @@ SELECT COUNT(*) FROM Users GROUP BY last_name;
 (2 rows)
 ```
 
-This isn't too helpful, as we don't know which `last_names` have been grouped.
+### Grouping columns with unique content
+
+Grouping by a column that contains unique values will return a table
+with a count of 1 for every row:
+
+```sql
+SELECT COUNT(*) FROM Users GROUP BY user_handle;
+
+ count
+-------
+     1
+     1
+     1
+     1
+(4 rows)
+```
+
+### Adding column names to a `GROUP BY` query to make results more descriptive
+
+Grouping by a column alone doesn't give us very much information. If we group by
+`last_name` we don't know what the counts for the values represent.
+
 We can add a column to our `SELECT` statement to output any columns we want
 returned in the query:
 
 
 ```sql
-SELECT COUNT(^), last_name FROM Users GROUP BY last_name;
+SELECT COUNT(*), last_name FROM Users GROUP BY last_name;
 
  count | last_name
 -------+-----------
      2 | Soap
      2 | Doe
 (2 rows)
+```
+
+If we attempt to add another column to return in the results, but that column is
+not in the `GROUP BY` statement, we'll get an error:
+
+```sql
+SELECT COUNT(*), last_name, first_name FROM Users GROUP BY last_name;
+
+ERROR:  column "users.first_name" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: SELECT COUNT(*), last_name, first_name FROM Users GROUP BY l...
+```
+
+Because more than one row can be in a single group, by adding `first_name` to
+our query without including it in the `GROUP BY` statement, the database doesn't
+know _which_ `first_name` to display in the query.
+
+To fix this, one option is to add the column to the `GROUP BY` statement.
+
+### Grouping by multiple columns
+
+To fix the example above where we got an error because `first_name` is not
+specified in the `GROUP BY` statement:
+
+```sql
+SELECT COUNT(*), last_name, first_name FROM Users GROUP BY last_name, first_name;
+
+ count | last_name | first_name
+-------+-----------+------------
+     1 | Soap      | Jane
+     1 | Doe       | Jane
+     1 | Soap      | John
+     1 | Doe       | John
+(4 rows)
+```
+
+We now get all our rows back. This is because the combination of both
+`last_name` and `first_name` will determine the groups our query will return.
+
+In this scenario, if we had multiple users with the same `last_name` and
+`first_name` we would have a row in the result that had a count greater than 1.
+
+### Built-in aggregate functions
+
+Most database have a number of built-in function to aggregate data.
+
+A few commonly used ones are:
+
+- `MIN`
+- `MAX`
+- `AVG`
+- `SUM`
+- `MEDIAN`
+
+#### `MIN`
+
+```sql
+SELECT MIN(last_name) FROM Users;
+
+ min
+---------------
+ Doe
+(1 row)
+```
+
+#### `MAX`
+
+```sql
+SELECT MIN(last_name) FROM Users;
+    max
+------------
+ 2019-08-17
+(1 row)
+```
+
+### Aggregate functions and multiple columns
+
+Attempting to retrieve multiple columns with an aggregate function works in a
+similar way to how the `GROUP BY` statement works; you can't retrieve a column
+that's not defined in the aggregate function, because that additional column
+may represent multiple values:
+
+```sql
+SELECT MAX(first_name), last_name FROM Users;
+
+ERROR:  column "users.last_name" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: SELECT MAX(first_name), last_name FROM Users;
 ```
