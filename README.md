@@ -2,6 +2,20 @@
 
 Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.io/courses/sql-fundamentals](https://egghead.io/courses/sql-fundamentals)
 
+## Running the db
+
+1. Install Docker
+2. Run `docker-compose`
+3. Connect to the `psql` process running inside the container
+
+```bash
+# start the container
+$ docker-compose up
+
+# connect to the psql instance
+$ docker-compose exec sql_fundamentals psql -U postgres
+```
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
@@ -39,6 +53,7 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
     - [`MIN`](#min)
     - [`MAX`](#max)
   - [Aggregate functions and multiple columns](#aggregate-functions-and-multiple-columns)
+- [10. Conditionally Select out Filtered Data with SQL Where](#10-conditionally-select-out-filtered-data-with-sql-where)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -912,3 +927,5 @@ SELECT MAX(first_name), last_name FROM Users;
 ERROR:  column "users.last_name" must appear in the GROUP BY clause or be used in an aggregate function
 LINE 1: SELECT MAX(first_name), last_name FROM Users;
 ```
+
+## 10. Conditionally Select out Filtered Data with SQL Where
