@@ -41,6 +41,15 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
     - [`MAX`](#max)
   - [Aggregate functions and multiple columns](#aggregate-functions-and-multiple-columns)
 - [10. Conditionally Select out Filtered Data with SQL Where](#10-conditionally-select-out-filtered-data-with-sql-where)
+  - [Conjunctions and disjunctions](#conjunctions-and-disjunctions)
+  - [Comparison operators](#comparison-operators)
+  - [Comparison predicates](#comparison-predicates)
+    - [`NULL` predicate](#null-predicate)
+    - [`BETWEEN` predicate](#between-predicate)
+  - [Row and array comparison](#row-and-array-comparison)
+    - [`IN` / `NOT IN`](#in--not-in)
+    - [`ANY` / `SOME`](#any--some)
+    - [`ALL`](#all)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -930,3 +939,200 @@ LINE 1: SELECT MAX(first_name), last_name FROM Users;
 ```
 
 ## 10. Conditionally Select out Filtered Data with SQL Where
+
+When using the `SELECT` clause without any conditions we get all the rows in
+the result.
+
+To retrieve specific rows we use the `WHERE` clause:
+
+```sql
+SELECT * FROM Users WHERE last_name = 'Doe';
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John
+(2 rows)
+```
+
+One can think of the `SELECT` clause as a `for` loop, and the `WHERE` clause as
+a filter.
+
+### Conjunctions and disjunctions
+
+We can use `AND` and `OR` to make our queries more specific:
+
+```sql
+SELECT * FROM Users WHERE last_name = 'Doe' AND 'first_name' = 'John';
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John
+(1 row)
+
+--
+
+SELECT * FROM Users WHERE last_name = 'Doe' OR 'first_name' = 'John';
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John
+(3 rows)
+```
+
+### Comparison operators
+
+The following comparison operators are available in most SQL databases:
+
+- `>` - greater than
+- `>=` - greater than or equal to
+- `<` - less than
+- `<=` - less than or equal to
+- `=` - equal
+- `<>` - not equal
+
+```sql
+SELECT * FROM Users WHERE last_name = 'Doe';
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John
+(2 rows)
+```
+
+**Note:** Single quotes and double quotes perform different jobs in SQL
+databases. Single quotes create text strings, double quotes create identifiers,
+i.e. they can be used to identify names of tables and columns while preventing
+the database from using its own lowercase conversion (avoid the use of double
+quotes, as per [Don’t use double quotes in PostgreSQL](https://lerner.co.il/2013/11/30/quoting-postgresql/)).
+
+```sql
+SELECT * FROM Users WHERE last_name <> 'Doe';
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John
+(2 rows)
+```
+
+### Comparison predicates
+
+SQL databases provide a number of comparison predicates to filter queries:
+
+| **predicate**                       | **description**                                  |
+| `expression IS NULL`                | is null                                          |
+| `expression IS NOT NULL`            | is not null                                      |
+| `expression ISNULL`                 | is null (nonstandard syntax)                     |
+| `expression NOTNULL`                | is not null (nonstandard syntax)                 |
+| `a BETWEEN x AND y`                 | between                                          |
+| `a NOT BETWEEN x AND`               | y	not between                                    |
+| `a BETWEEN SYMMETRIC x AND y`       | between, after sorting the comparison values     |
+| `a NOT BETWEEN SYMMETRIC x AND y`   | not between, after sorting the comparison values |
+| `a IS DISTINCT FROM b`              | not equal, treating null like an ordinary value  |
+| `a IS NOT DISTINCT FROM b`          | equal, treating null like an ordinary value      |
+| `boolean_expression IS TRUE`        | is true                                          |
+| `boolean_expression IS NOT TRUE`    | is false or unknown                              |
+| `boolean_expression IS FALSE`       | is false                                         |
+| `boolean_expression IS NOT FALSE`   | is true or unknown                               |
+| `boolean_expression IS UNKNOWN`     | is unknown                                       |
+| `boolean_expression IS NOT UNKNOWN` | is true or false                                 |
+
+#### `NULL` predicate
+
+We can also select rows where specific values are NULL. Let's drop the `NOT
+NULL` constraint on `last_name`, insert a record without a `last_name`, and then query
+it:
+
+```sql
+-- remove NOT NULL constraint from last_name column
+ALTER TABLE Users ALTER COLUMN last_name DROP NOT NULL;
+
+-- insert user without last_name
+INSERT INTO Users
+  (create_date, user_handle)
+  VALUES
+    (NOW(), 'bb2cefa3-a509-4b1a-82c8-e6932ab4ce46', 'Killface');
+
+-- retrieve columns where last_name is NULL
+SELECT * FROM Users WHERE last_name IS NULL;
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |           | Killface
+(1 row)
+```
+
+Inversely, we can select for rows that contain values that are not NULL:
+
+```sql
+SELECT * FROM Users WHERE last_name IS NOT NULL;
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John
+(4 rows)
+```
+
+The `IS` opeator needs to be used when selecting for `NULL`, as using the `=`
+operator will attempt to find rows that contain the value `NULL`, instead of
+returning a boolean:
+
+```sql
+SELECT * FROM Users WHERE last_name = NULL;
+
+ create_date | user_handle | last_name | first_name
+-------------+-------------+-----------+------------
+(0 rows)
+```
+
+#### `BETWEEN` predicate
+
+We can select ranges of values using the `BETWEEN` comparison predicate:
+
+```sql
+SELECT * FROM Users WHERE create_date BETWEEN '2019-08-17' AND NOW();
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John
+ 2019-08-17  | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |           | Killface
+(5 rows)
+```
+
+**Note:** If the dates were switched so that the most recent date was before the
+older date, we'd get no results:
+
+```sql
+SELECT * FROM Users WHERE create_date BETWEEN NOW() AND '2019-08-17';
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+(0 rows)
+```
+
+### Row and array comparison
+
+SQL databases provide a number of row and array comparison clauses:
+
+| clause   | syntax                                       |
+| `IN`     | `expression IN (value, [, ...])`             |
+| `NOT IN` | `expression NOT IN (value, [, ...])`         |
+| `ANY`    | `expression operator ANY (array expression)` |
+| `ALL`    | `expression operator ALL (array expression)` |
+
+#### `IN` / `NOT IN`
+
+#### `ANY` / `SOME`
+
+#### `ALL`
+
