@@ -2,24 +2,11 @@
 
 Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.io/courses/sql-fundamentals](https://egghead.io/courses/sql-fundamentals)
 
-## Running the db
-
-1. Install Docker
-2. Run `docker-compose`
-3. Connect to the `psql` process running inside the container
-
-```bash
-# start the container
-$ docker-compose up
-
-# connect to the psql instance
-$ docker-compose exec sql_fundamentals psql -U postgres
-```
-
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**
 
+- [Running a local db](#running-a-local-db)
 - [2. Create a Table with SQL `CREATE`](#2-create-a-table-with-sql-create)
 - [3. Add Data to a Table with SQL `INSERT`](#3-add-data-to-a-table-with-sql-insert)
 - [4. Query Data with the `SELECT` Command in SQL](#4-query-data-with-the-select-command-in-sql)
@@ -56,6 +43,20 @@ $ docker-compose exec sql_fundamentals psql -U postgres
 - [10. Conditionally Select out Filtered Data with SQL Where](#10-conditionally-select-out-filtered-data-with-sql-where)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Running a local db
+
+1. Install Docker
+2. Run `docker-compose`
+3. Connect to the `psql` process running inside the container
+
+```bash
+# start the container
+$ docker-compose up
+
+# connect to the psql instance
+$ docker-compose exec sql_fundamentals psql -U postgres
+```
 
 ## 2. Create a Table with SQL `CREATE`
 
