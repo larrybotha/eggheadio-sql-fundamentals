@@ -757,3 +757,44 @@ It's best to avoid indexes for tables that:
 - have columns that are frequently updated
 
 ## 9. Select Grouped and Aggregated Data with SQL
+
+Let's say we have 4 users in our `Users` table:
+
+```sql
+postgres=# SELECT * FROM Users;
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John
+(4 rows)
+```
+
+If we wanted to count the number of users by the same `last_name`, we can
+use the `GROUP BY` keyword to group rows by column:
+
+```sql
+SELECT COUNT(*) FROM Users GROUP BY last_name;
+
+ count
+-------
+     2
+     2
+(2 rows)
+```
+
+This isn't too helpful, as we don't know which `last_names` have been grouped.
+We can add a column to our `SELECT` statement to output any columns we want
+returned in the query:
+
+
+```sql
+SELECT COUNT(^), last_name FROM Users GROUP BY last_name;
+
+ count | last_name
+-------+-----------
+     2 | Soap
+     2 | Doe
+(2 rows)
+```
