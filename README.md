@@ -197,9 +197,9 @@ If a column that doesn't exist is queried, we get an error:
 
 ```sql
 SELECT first_name, last_name, middle_name FROM Users;
+
 ERROR:  column "middle_name" does not exist
 LINE 1: SELECT first_name, last_name, middle_name FROM Users;
-                                      ^
 ```
 
 ### Querying with built-in functions
@@ -286,6 +286,7 @@ surnames:
 ```sql
 -- # distinct names
 SELECT COUNT(DISTINCT(first_name)) as num_distinct_names FROM Users;
+
  num_distinct_names
 --------------------
                   3
@@ -293,6 +294,7 @@ SELECT COUNT(DISTINCT(first_name)) as num_distinct_names FROM Users;
 
 -- # distinct surnames
 SELECT COUNT(DISTINCT(last_name)) as num_distinct_last_names FROM Users;
+
  num_distinct_last_names
 -------------------------
                        2
@@ -355,7 +357,9 @@ we could end up changing or removing critical data.
 For the above command we _should_ have instead used:
 
 ```sql
-UPDATE Users SET user_handle = uuid_generate_v4() WHERE last_name = 'Turner';
+UPDATE Users
+  SET user_handle = uuid_generate_v4()
+  WHERE last_name = 'Turner';
 ```
 
 Unless a condition is provided, a looping command will apply to every row.
@@ -366,9 +370,10 @@ Unless a condition is provided, a looping command will apply to every row.
 command:
 
 ```sql
-UPDATE Users SET
-  user_handle = uuid_generate_v4(),
-  first_name = 'Danny'
+UPDATE Users
+  SET
+    user_handle = uuid_generate_v4(),
+    first_name = 'Danny'
   WHERE
     last_name = 'clark';
 ```
@@ -386,7 +391,8 @@ delete all rows in a table:
 DELETE FROM Users;
 
 -- delete only the rows that meet a condition
-DELETE FROM Users WHERE first_name = 'Joe';
+DELETE FROM Users
+  WHERE first_name = 'Joe';
 ```
 
 We can combine conditions using `OR` or `AND`:
@@ -394,15 +400,13 @@ We can combine conditions using `OR` or `AND`:
 ```sql
 -- conjunction
 DELETE FROM Users
-WHERE
-  first_name = 'Joe' AND
-  last_name = 'Soap';
+  WHERE first_name = 'Joe'
+    AND last_name = 'Soap';
 
 -- disjunction
 DELETE FROM Users
-WHERE
-  first_nane = 'Joe' OR
-  first_name = 'John';
+  WHERE first_nane = 'Joe'
+    OR first_name = 'John';
 ```
 
 ### Deleting all rows
@@ -793,7 +797,8 @@ It's best to avoid indexes for tables that:
 Let's say we have 4 users in our `Users` table:
 
 ```sql
-postgres=# SELECT * FROM Users;
+SELECT * FROM Users;
+
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
  2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane
@@ -807,7 +812,8 @@ If we wanted to count the number of users by the same `last_name`, we can
 use the `GROUP BY` keyword to group rows by column:
 
 ```sql
-SELECT COUNT(*) FROM Users GROUP BY last_name;
+SELECT COUNT(*) FROM Users
+  GROUP BY last_name;
 
  count
 -------
@@ -822,7 +828,8 @@ Grouping by a column that contains unique values will return a table
 with a count of 1 for every row:
 
 ```sql
-SELECT COUNT(*) FROM Users GROUP BY user_handle;
+SELECT COUNT(*) FROM Users
+  GROUP BY user_handle;
 
  count
 -------
@@ -843,7 +850,8 @@ returned in the query:
 
 
 ```sql
-SELECT COUNT(*), last_name FROM Users GROUP BY last_name;
+SELECT COUNT(*), last_name FROM Users
+  GROUP BY last_name;
 
  count | last_name
 -------+-----------
@@ -856,7 +864,8 @@ If we attempt to add another column to return in the results, but that column is
 not in the `GROUP BY` statement, we'll get an error:
 
 ```sql
-SELECT COUNT(*), last_name, first_name FROM Users GROUP BY last_name;
+SELECT COUNT(*), last_name, first_name FROM Users
+  GROUP BY last_name;
 
 ERROR:  column "users.first_name" must appear in the GROUP BY clause or be used in an aggregate function
 LINE 1: SELECT COUNT(*), last_name, first_name FROM Users GROUP BY l...
@@ -874,7 +883,8 @@ To fix the example above where we got an error because `first_name` is not
 specified in the `GROUP BY` statement:
 
 ```sql
-SELECT COUNT(*), last_name, first_name FROM Users GROUP BY last_name, first_name;
+SELECT COUNT(*), last_name, first_name FROM Users
+  GROUP BY last_name, first_name;
 
  count | last_name | first_name
 -------+-----------+------------
@@ -946,7 +956,8 @@ the result.
 To retrieve specific rows we use the `WHERE` clause:
 
 ```sql
-SELECT * FROM Users WHERE last_name = 'Doe';
+SELECT * FROM Users
+  WHERE last_name = 'Doe';
 
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
@@ -963,7 +974,9 @@ a filter.
 We can use `AND` and `OR` to make our queries more specific:
 
 ```sql
-SELECT * FROM Users WHERE last_name = 'Doe' AND 'first_name' = 'John';
+SELECT * FROM Users
+  WHERE last_name = 'Doe'
+    AND first_name = 'John';
 
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
@@ -972,7 +985,9 @@ SELECT * FROM Users WHERE last_name = 'Doe' AND 'first_name' = 'John';
 
 --
 
-SELECT * FROM Users WHERE last_name = 'Doe' OR 'first_name' = 'John';
+SELECT * FROM Users
+  WHERE last_name = 'Doe'
+    OR 'first_name' = 'John';
 
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
@@ -994,7 +1009,8 @@ The following comparison operators are available in most SQL databases:
 - `<>` - not equal
 
 ```sql
-SELECT * FROM Users WHERE last_name = 'Doe';
+SELECT * FROM Users
+  WHERE last_name = 'Doe';
 
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
@@ -1010,7 +1026,8 @@ the database from using its own lowercase conversion (avoid the use of double
 quotes, as per [Don’t use double quotes in PostgreSQL](https://lerner.co.il/2013/11/30/quoting-postgresql/)).
 
 ```sql
-SELECT * FROM Users WHERE last_name <> 'Doe';
+SELECT * FROM Users
+  WHERE last_name <> 'Doe';
 
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
@@ -1050,7 +1067,8 @@ it:
 
 ```sql
 -- remove NOT NULL constraint from last_name column
-ALTER TABLE Users ALTER COLUMN last_name DROP NOT NULL;
+ALTER TABLE Users
+  ALTER COLUMN last_name DROP NOT NULL;
 
 -- insert user without last_name
 INSERT INTO Users
@@ -1059,7 +1077,8 @@ INSERT INTO Users
     (NOW(), 'bb2cefa3-a509-4b1a-82c8-e6932ab4ce46', 'Killface');
 
 -- retrieve columns where last_name is NULL
-SELECT * FROM Users WHERE last_name IS NULL;
+SELECT * FROM Users
+  WHERE last_name IS NULL;
 
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
@@ -1070,7 +1089,8 @@ SELECT * FROM Users WHERE last_name IS NULL;
 Inversely, we can select for rows that contain values that are not NULL:
 
 ```sql
-SELECT * FROM Users WHERE last_name IS NOT NULL;
+SELECT * FROM Users
+  WHERE last_name IS NOT NULL;
 
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
@@ -1086,7 +1106,8 @@ operator will attempt to find rows that contain the value `NULL`, instead of
 returning a boolean:
 
 ```sql
-SELECT * FROM Users WHERE last_name = NULL;
+SELECT * FROM Users
+  WHERE last_name = NULL;
 
  create_date | user_handle | last_name | first_name
 -------------+-------------+-----------+------------
@@ -1098,7 +1119,9 @@ SELECT * FROM Users WHERE last_name = NULL;
 We can select ranges of values using the `BETWEEN` comparison predicate:
 
 ```sql
-SELECT * FROM Users WHERE create_date BETWEEN '2019-08-17' AND NOW();
+SELECT * FROM Users
+  WHERE create_date
+    BETWEEN '2019-08-17' AND NOW();
 
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
@@ -1114,7 +1137,9 @@ SELECT * FROM Users WHERE create_date BETWEEN '2019-08-17' AND NOW();
 older date, we'd get no results:
 
 ```sql
-SELECT * FROM Users WHERE create_date BETWEEN NOW() AND '2019-08-17';
+SELECT * FROM Users
+  WHERE create_date
+    BETWEEN NOW() AND '2019-08-17';
 
  create_date |             user_handle              | last_name | first_name
 -------------+--------------------------------------+-----------+------------
