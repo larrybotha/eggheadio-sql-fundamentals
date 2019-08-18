@@ -1023,7 +1023,7 @@ SELECT * FROM Users WHERE last_name <> 'Doe';
 
 SQL databases provide a number of comparison predicates to filter queries:
 
-**predicate**                       | **description**
+predicate                           | description
 -----                               | ------
 `expression IS NULL`                | is null
 `expression IS NOT NULL`            | is not null
