@@ -1159,7 +1159,84 @@ clause   | syntax
 
 #### `IN` / `NOT IN`
 
+`IN` must be preceded by an expression, and followed by a list of values. If the
+value on the left is equal to any of the values on the right, the statement
+evaluates to true, and the row is returned in the query:
+
+```sql
+SELECT * FROM Users
+  WHERE last_name IN ('Soap', 'Doe');
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John
+(4 rows)
+```
+
+Using `IN` is equivalent to using multiple `OR` operators:
+
+```sql
+SELECT * FROM Users
+  WHERE last_name = 'Soap'
+    AND last_name = 'Doe';
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John
+(4 rows)
+```
+
 #### `ANY` / `SOME`
+
+`ANY` forms part of an expression that evaluates the result of a subquery where
+at least one row in the subquery results in a true comparison for the `ANY`
+expression.
+
+Let's say we want to filter rows for a specific `last_name` after first using a
+subquery to find rows where users have a specific `first_name`:
+
+```sql
+SELECT * FROM Users
+  -- filter rows in Users where for any row in the subquery first_name equals a
+  -- value in the subquery
+  WHERE first_name = ANY
+    -- get a table of first_names for rows where last_name is NULL
+    (SELECT first_name FROM Users
+      WHERE last_name IS NULL);
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |           | Killface
+(1 row)
+```
+
+`SOME` is an alias of `ANY`.
 
 #### `ALL`
 
+`ALL` forms part of an expression that evaluates the result of a subquery where
+every row in the subquery results in a true comparison for the `ANY` expression.
+
+```sql
+SELECT * FROM Users
+  -- filter rows in Users where for all rows in the subquery first_name does not
+  -- equal a value in the subquery
+  WHERE first_name <> ALL
+    -- get a table of first_names where the last_name is 'Doe'
+    (SELECT first_name FROM Users
+      WHERE last_name = 'Doe');
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |           | Killface
+(1 row)
+```
+
+**Note:** for both `ANY` and `ALL` it's easiest to understand the query by first
+understanding what the subquery is returning.
