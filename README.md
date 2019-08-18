@@ -196,9 +196,9 @@ If a column that doesn't exist is queried, we get an error:
 
 
 ```sql
-SELECT first_name, last_name, middle_name from Users;
+SELECT first_name, last_name, middle_name FROM Users;
 ERROR:  column "middle_name" does not exist
-LINE 1: SELECT first_name, last_name, middle_name from Users;
+LINE 1: SELECT first_name, last_name, middle_name FROM Users;
                                       ^
 ```
 
@@ -224,7 +224,7 @@ Instead of returning a query with the names of the columns as-is, we can specify
 an alias for columns for whatever reason we choose:
 
 ```sql
-SELECT first_name as f, last_name as l FROM Users;
+SELECT first_name AS f, last_name AS l FROM Users;
 
   f   |  l
 ------+------
@@ -454,9 +454,9 @@ CREATE TABLE USERS (
 );
 
 -- [1] CONSTRAINT keyword which allows one to name a constraint. If a name is
-       not given, most databases will generate one
+--     not given, most databases will generate one
 -- [2] the name of the constraint. We prefix it with PK_ to indicate that it's a
-       primary key
+--     primary key
 -- [3] the type of constraint we are defining - in this case, a primary key
 -- [4] a list of columns used to define the primary key
 ```
