@@ -1023,23 +1023,24 @@ SELECT * FROM Users WHERE last_name <> 'Doe';
 
 SQL databases provide a number of comparison predicates to filter queries:
 
-| **predicate**                       | **description**                                  |
-| `expression IS NULL`                | is null                                          |
-| `expression IS NOT NULL`            | is not null                                      |
-| `expression ISNULL`                 | is null (nonstandard syntax)                     |
-| `expression NOTNULL`                | is not null (nonstandard syntax)                 |
-| `a BETWEEN x AND y`                 | between                                          |
-| `a NOT BETWEEN x AND`               | y	not between                                    |
-| `a BETWEEN SYMMETRIC x AND y`       | between, after sorting the comparison values     |
-| `a NOT BETWEEN SYMMETRIC x AND y`   | not between, after sorting the comparison values |
-| `a IS DISTINCT FROM b`              | not equal, treating null like an ordinary value  |
-| `a IS NOT DISTINCT FROM b`          | equal, treating null like an ordinary value      |
-| `boolean_expression IS TRUE`        | is true                                          |
-| `boolean_expression IS NOT TRUE`    | is false or unknown                              |
-| `boolean_expression IS FALSE`       | is false                                         |
-| `boolean_expression IS NOT FALSE`   | is true or unknown                               |
-| `boolean_expression IS UNKNOWN`     | is unknown                                       |
-| `boolean_expression IS NOT UNKNOWN` | is true or false                                 |
+**predicate**                       | **description**
+-----                               | ------
+`expression IS NULL`                | is null
+`expression IS NOT NULL`            | is not null
+`expression ISNULL`                 | is null (nonstandard syntax)
+`expression NOTNULL`                | is not null (nonstandard syntax)
+`a BETWEEN x AND y`                 | between
+`a NOT BETWEEN x AND`               | y	not between
+`a BETWEEN SYMMETRIC x AND y`       | between, after sorting the comparison values
+`a NOT BETWEEN SYMMETRIC x AND y`   | not between, after sorting the comparison values
+`a IS DISTINCT FROM b`              | not equal, treating null like an ordinary value
+`a IS NOT DISTINCT FROM b`          | equal, treating null like an ordinary value
+`boolean_expression IS TRUE`        | is true
+`boolean_expression IS NOT TRUE`    | is false or unknown
+`boolean_expression IS FALSE`       | is false
+`boolean_expression IS NOT FALSE`   | is true or unknown
+`boolean_expression IS UNKNOWN`     | is unknown
+`boolean_expression IS NOT UNKNOWN` | is true or false
 
 #### `NULL` predicate
 
@@ -1124,11 +1125,12 @@ SELECT * FROM Users WHERE create_date BETWEEN NOW() AND '2019-08-17';
 
 SQL databases provide a number of row and array comparison clauses:
 
-| clause   | syntax                                       |
-| `IN`     | `expression IN (value, [, ...])`             |
-| `NOT IN` | `expression NOT IN (value, [, ...])`         |
-| `ANY`    | `expression operator ANY (array expression)` |
-| `ALL`    | `expression operator ALL (array expression)` |
+clause   | syntax
+-------- | -------
+`IN`     | `expression IN (value, [, ...])`
+`NOT IN` | `expression NOT IN (value, [, ...])`
+`ANY`    | `expression operator ANY (array expression)`
+`ALL`    | `expression operator ALL (array expression)`
 
 #### `IN` / `NOT IN`
 
