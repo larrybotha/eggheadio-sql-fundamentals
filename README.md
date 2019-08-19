@@ -50,6 +50,13 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
     - [`IN` / `NOT IN`](#in--not-in)
     - [`ANY` / `SOME`](#any--some)
     - [`ALL`](#all)
+- [11. Combining Tables Together with SQL Join Statements](#11-combining-tables-together-with-sql-join-statements)
+  - [`[INNER] JOIN`](#inner-join)
+  - [`LEFT [OUTER] JOIN`](#left-outer-join)
+  - [`RIGHT [OUTER] JOIN`](#right-outer-join)
+  - [`FULL [OUTER] JOIN`](#full-outer-join)
+  - [`CROSS JOIN`](#cross-join)
+  - [Querying by column name in joins](#querying-by-column-name-in-joins)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -1240,3 +1247,159 @@ SELECT * FROM Users
 
 **Note:** for both `ANY` and `ALL` it's easiest to understand the query by first
 understanding what the subquery is returning.
+
+## 11. Combining Tables Together with SQL Join Statements
+
+Joins allow us to retrieve data for multiple tables in a single query.
+
+type               | description
+---                | ---
+`INNER JOIN`       | Get all the values for both tables under the provided conditions, ond only for the rows that meet the conditions
+`LEFT OUTER JOIN`  | Perform an inner join, and then append all the other rows in the table on the left of the `JOIN` keyword
+`RIGHT OUTER JOIN` | Perform an inner join, and then append all the other rows in the table on the right of the `JOIN` keyword
+`FULL OUTER JOIN`  | Perform an inner join, and then append all the other rows in both tables
+`CROSS JOIN`       | Get a cartesian product of all columns in the provided tables
+
+Let's add a few rows to our `Purchases` table:
+
+```sql
+INSERT INTO Purchases
+  (create_date, user_handle, sku, quantity)
+  VALUES
+    (NOW(), '649e9396-1cb0-43dd-a907-7dc6fd23ddc7', 'bb2cefa3-a509-4b1a-82c8-e6932ab4ce46', 3),
+    (NOW(), '1c662040-f4dd-4188-9a93-692bee9b2888', 'cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c', 3);
+```
+
+Now, if we wanted to get the data for purchases as well as the users who made
+those purchases, we could do two separate queries, and filter the users by the
+`user_handles` returned in in the purchases query.
+
+Instead, we can use `JOIN` to get all the data in a single query:
+
+### `[INNER] JOIN`
+
+```sql
+SELECT * FROM Users AS u JOIN Purchases AS p ON u.user_handle = p.user_handle;
+
+ create_date |             user_handle              | last_name | first_name | create_date |             user_handle              |                 sku                  | quantity
+-------------+--------------------------------------+-----------+------------+-------------+--------------------------------------+--------------------------------------+----------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane       | 2019-08-19  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |        3
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John       | 2019-08-19  | 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c |        3
+(2 rows)
+```
+
+### `LEFT [OUTER] JOIN`
+
+```sql
+SELECT * FROM Users AS u LEFT OUTER JOIN Purchases AS p  ON  u.user_handle = p.user_handle;
+--            [                   1                   ]  [2] [             2             ]
+
+-- [1] the tables we want to join, and the type of join
+-- [2] the ON keyword which signifies the conditions under which we want the
+--     tables to be joined
+-- [3] the conditions under which we want our tables joined
+
+ create_date |             user_handle              | last_name | first_name | create_date |             user_handle              |                 sku                  | quantity
+-------------+--------------------------------------+-----------+------------+-------------+--------------------------------------+--------------------------------------+----------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane       | 2019-08-19  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |        3
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John       | 2019-08-19  | 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c |        3
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane       |             |                                      |                                      |
+ 2019-08-17  | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |           | Killface   |             |                                      |                                      |
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John       |             |                                      |                                      |
+(5 rows)
+```
+
+In the above example we got the data for users and their purchases, as well as
+all the data for users who had no purchases, with `NULL` values for their
+columns.
+
+The `LEFT OUTER JOIN` is responsible for retrieving all the rows from the
+`Users` table - the table on the left of the join.
+
+`INNER` joins are the default, and the keyword is implied. Using `LEFT`,
+`RIGHT`, or `FULL` will always be interpreted as an `OUTER` join. Attempting to
+use `INNER` with any of the outer join keywords will result in an error.
+
+### `RIGHT [OUTER] JOIN`
+
+We could do the same for the `Purchases` table:
+
+```sql
+SELECT * FROM Users AS u RIGHT OUTER JOIN Purchases p ON u.user_handle = p.user_handle;
+
+ create_date |             user_handle              | last_name | first_name | create_date |             user_handle              |                 sku                  | quantity
+-------------+--------------------------------------+-----------+------------+-------------+--------------------------------------+--------------------------------------+----------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane       | 2019-08-19  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |        3
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John       | 2019-08-19  | 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c |        3
+(2 rows)
+```
+
+We got no rows with `NULL` user values because every row in the `Purchases`
+table is related to a user thanks to the foreign key constraint which is
+enforced on insertion of rows.
+
+### `FULL [OUTER] JOIN`
+
+Instead of getting all rows for either one table or another, we can get all rows
+for all tables:
+
+```sql
+SELECT * FROM Users AS u FULL OUTER JOIN Purchases p ON u.user_handle = p.user_handle;
+
+ create_date |             user_handle              | last_name | first_name | create_date |             user_handle              |                 sku                  | quantity
+-------------+--------------------------------------+-----------+------------+-------------+--------------------------------------+--------------------------------------+----------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane       | 2019-08-19  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |        3
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John       | 2019-08-19  | 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c |        3
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane       |             |                                      |                                      |
+ 2019-08-17  | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |           | Killface   |             |                                      |                                      |
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John       |             |                                      |                                      |
+(5 rows)
+```
+
+### `CROSS JOIN`
+
+A `CROSS` join will return a cartesion product of all columns in each table:
+
+```sql
+SELECT * FROM Users as u CROSS JOIN Purchases p;
+
+ create_date |             user_handle              | last_name | first_name | create_date |             user_handle              |                 sku                  | quantity
+-------------+--------------------------------------+-----------+------------+-------------+--------------------------------------+--------------------------------------+----------
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane       | 2019-08-19  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |        3
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Jane       | 2019-08-19  | 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c |        3
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane       | 2019-08-19  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |        3
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Jane       | 2019-08-19  | 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c |        3
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John       | 2019-08-19  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |        3
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | John       | 2019-08-19  | 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c |        3
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John       | 2019-08-19  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |        3
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | John       | 2019-08-19  | 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c |        3
+ 2019-08-17  | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |           | Killface   | 2019-08-19  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |        3
+ 2019-08-17  | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |           | Killface   | 2019-08-19  | 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c |        3
+(10 rows)
+```
+
+There's no need for the `ON` keyword in a `CROSS` join because we're getting all
+values for all columns. In fact, providing `ON` will throw an error.
+
+
+### Querying by column name in joins
+
+If we wanted a specific column in a join, we need to provide a qualified name
+for that column, otherwise SQL doesn't know which column to return:
+
+```sql
+-- invalid
+SELECT user_handle FROM Users AS u JOIN Purchases as p ON u.user_handle = p.user_handle;
+
+ERROR:  column reference "user_handle" is ambiguous
+LINE 1: SELECT user_handle FROM Users AS u JOIN Purchases as p ON u....
+
+-- valid
+SELECT u.user_handle FROM Users AS u JOIN Purchases as p ON u.user_handle = p.user_handle;
+
+             user_handle
+--------------------------------------
+ 649e9396-1cb0-43dd-a907-7dc6fd23ddc7
+ 1c662040-f4dd-4188-9a93-692bee9b2888
+(2 rows)
+```
