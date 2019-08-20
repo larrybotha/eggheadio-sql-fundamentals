@@ -57,6 +57,10 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
   - [`FULL [OUTER] JOIN`](#full-outer-join)
   - [`CROSS JOIN`](#cross-join)
   - [Querying by column name in joins](#querying-by-column-name-in-joins)
+- [11. Subquery Dynamic Datasets in SQL](#11-subquery-dynamic-datasets-in-sql)
+  - [Subqueries for updating rows](#subqueries-for-updating-rows)
+  - [Subqueries in joins](#subqueries-in-joins)
+  - [Retrieving a subquery as a column in a query](#retrieving-a-subquery-as-a-column-in-a-query)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -1279,7 +1283,9 @@ Instead, we can use `JOIN` to get all the data in a single query:
 ### `[INNER] JOIN`
 
 ```sql
-SELECT * FROM Users AS u JOIN Purchases AS p ON u.user_handle = p.user_handle;
+SELECT * FROM Users AS u
+  JOIN Purchases AS p
+    ON u.user_handle = p.user_handle;
 
  create_date |             user_handle              | last_name | first_name | create_date |             user_handle              |                 sku                  | quantity
 -------------+--------------------------------------+-----------+------------+-------------+--------------------------------------+--------------------------------------+----------
@@ -1291,8 +1297,10 @@ SELECT * FROM Users AS u JOIN Purchases AS p ON u.user_handle = p.user_handle;
 ### `LEFT [OUTER] JOIN`
 
 ```sql
-SELECT * FROM Users AS u LEFT OUTER JOIN Purchases AS p  ON  u.user_handle = p.user_handle;
---            [                   1                   ]  [2] [             2             ]
+SELECT * FROM Users AS u LEFT OUTER JOIN Purchases AS p
+--            [                   1                   ]
+    ON  u.user_handle = p.user_handle;
+--  [2] [             2             ]
 
 -- [1] the tables we want to join, and the type of join
 -- [2] the ON keyword which signifies the conditions under which we want the
@@ -1325,7 +1333,9 @@ use `INNER` with any of the outer join keywords will result in an error.
 We could do the same for the `Purchases` table:
 
 ```sql
-SELECT * FROM Users AS u RIGHT OUTER JOIN Purchases p ON u.user_handle = p.user_handle;
+SELECT * FROM Users AS u
+  RIGHT OUTER JOIN Purchases p
+    ON u.user_handle = p.user_handle;
 
  create_date |             user_handle              | last_name | first_name | create_date |             user_handle              |                 sku                  | quantity
 -------------+--------------------------------------+-----------+------------+-------------+--------------------------------------+--------------------------------------+----------
@@ -1344,7 +1354,9 @@ Instead of getting all rows for either one table or another, we can get all rows
 for all tables:
 
 ```sql
-SELECT * FROM Users AS u FULL OUTER JOIN Purchases p ON u.user_handle = p.user_handle;
+SELECT * FROM Users AS u
+  FULL OUTER JOIN Purchases p
+    ON u.user_handle = p.user_handle;
 
  create_date |             user_handle              | last_name | first_name | create_date |             user_handle              |                 sku                  | quantity
 -------------+--------------------------------------+-----------+------------+-------------+--------------------------------------+--------------------------------------+----------
@@ -1361,7 +1373,8 @@ SELECT * FROM Users AS u FULL OUTER JOIN Purchases p ON u.user_handle = p.user_h
 A `CROSS` join will return a cartesion product of all columns in each table:
 
 ```sql
-SELECT * FROM Users as u CROSS JOIN Purchases p;
+SELECT * FROM Users AS u
+  CROSS JOIN Purchases p;
 
  create_date |             user_handle              | last_name | first_name | create_date |             user_handle              |                 sku                  | quantity
 -------------+--------------------------------------+-----------+------------+-------------+--------------------------------------+--------------------------------------+----------
@@ -1389,13 +1402,17 @@ for that column, otherwise SQL doesn't know which column to return:
 
 ```sql
 -- invalid
-SELECT user_handle FROM Users AS u JOIN Purchases as p ON u.user_handle = p.user_handle;
+SELECT user_handle FROM Users AS u
+  JOIN Purchases as p
+    ON u.user_handle = p.user_handle;
 
 ERROR:  column reference "user_handle" is ambiguous
 LINE 1: SELECT user_handle FROM Users AS u JOIN Purchases as p ON u....
 
 -- valid
-SELECT u.user_handle FROM Users AS u JOIN Purchases as p ON u.user_handle = p.user_handle;
+SELECT u.user_handle FROM Users AS u
+  JOIN Purchases as p
+    ON u.user_handle = p.user_handle;
 
              user_handle
 --------------------------------------
@@ -1403,3 +1420,162 @@ SELECT u.user_handle FROM Users AS u JOIN Purchases as p ON u.user_handle = p.us
  1c662040-f4dd-4188-9a93-692bee9b2888
 (2 rows)
 ```
+
+## 11. Subquery Dynamic Datasets in SQL
+
+Subqueries allow one to make a query within a query. Subqueries are often
+interchangeable with joins, and the initial decision between using a join vs a
+subquery is to first write a query that works, and then evaluate performance if
+it becomes an issue. The execution plan of the queries should be evaluated to
+determine if there's even any meaningful difference in how the RDBMS is actually
+processing the query. SQL is declarative - we tell the DB what we want, but we
+don't tell it how to do it; under the hood the RDBMS evaluates the most
+efficient way to perform the query.
+
+In a previous example we used `MIN` to pull out a row with the oldest
+`create_date`:
+
+```sql
+SELECT MIN(create_date) FROM Users;
+
+    min
+------------
+ 2019-08-17
+(1 row)
+```
+
+If, however, we wanted to get information for which user that minimum date
+belongs to, we'd get an error if we attempt to add the `first_name` column to
+the query, as there may be multiple users sharing that value, and the database
+wouldn't be able to determine which name to show:
+
+```sql
+SELECT MIN(create_date), first_name FROM Users;
+
+ERROR:  column "users.first_name" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: SELECT MIN(create_date), first_name FROM Users;
+```
+
+To address this, one can use `GROUP BY` to group the additional column:
+
+```sql
+-- get the minimum create_date for Users, and do so for _each_ grouping of
+-- first_name
+SELECT MIN(create_date), first_name FROM Users
+  GROUP BY first_name;
+
+    min     | first_name
+------------+------------
+ 2019-08-17 | Jane
+ 2019-08-17 | John
+ 2019-08-17 | Killface
+(3 rows)
+```
+
+The above result demonstrates why selecting `first_name` without grouping fails:
+we have 3 rows returned in the query, but we're aggregating on `create_date`. An
+aggregation implies that we expect a single value. Without using `GROUP BY`, which
+value for `first_name` should be returned?
+
+This may not be what we want, because the result we get is the aggregation of
+`MIN(create_date)` for _each_ grouping, not the absolute minimum `create_date`
+for the table.
+
+To get the absolute minimum `create_date` for the `Users` table we can instead
+use a subquery:
+
+```sql
+SELECT create_date, first_name FROM Users
+--                [1]
+  WHERE create_date =
+--    [2]
+    (SELECT MIN(create_date) FROM Users);
+--                    [3]
+
+-- [1] get the create_date and first_name columns in the Users table...
+-- [2] for the rows where create_date are equal to...
+-- [3] get the minimum create_date for the Users table
+
+ create_date | first_name
+-------------+------------
+ 2019-08-17  | Jane
+ 2019-08-17  | Jane
+ 2019-08-17  | John
+ 2019-08-17  | John
+ 2019-08-17  | Killface
+(5 rows)
+```
+
+We got all rows that have the minimum date.
+
+**Note:** A query with subqueries may be easier to read if the subqueries are
+evaluated before the statements that depend on them.
+
+### Subqueries for updating rows
+
+```sql
+UPDATE Users
+  -- set the first name of matching rows to Danny
+  SET first_name = 'Danny'
+  -- where the current first name is one of the values in an array defined by
+  -- a subquery
+  WHERE first_name IN (
+    -- get first names of all users whose last name is Doe
+    SELECT first_name FROM Users
+      WHERE last_name = 'Doe'
+  );
+
+ create_date |             user_handle              | last_name | first_name
+-------------+--------------------------------------+-----------+------------
+ 2019-08-17  | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 |           | Killface
+ 2019-08-17  | 1c662040-f4dd-4188-9a93-692bee9b2888 | Soap      | Danny
+ 2019-08-17  | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | Doe       | Danny
+ 2019-08-17  | 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | Soap      | Danny
+ 2019-08-17  | c85b174b-cc34-4948-b5c8-7acdf44ceb0f | Doe       | Danny
+(5 rows)
+```
+
+### Subqueries in joins
+
+Get the total purchases for each user:
+
+```sql
+-- get a total and first_names from the Users table and a join on subquery
+-- called 'p'
+SELECT total, first_name FROM Users u
+  INNER JOIN (
+    -- get the number of user_handles as total, and user_handles from the Purchases table
+    SELECT COUNT(user_handle) AS total, user_handle FROM Purchases
+      -- grouping by user_handle
+      GROUP BY user_handle
+  ) p
+    -- where user_handles in the subquery are equal to user_handles in the Users
+    -- table
+    ON p.user_handle = u.user_handle;
+
+ total | first_name
+-------+------------
+     1 | Jane
+     1 | Joe
+(2 rows)
+```
+
+### Retrieving a subquery as a column in a query
+
+If we wanted to get the average order size for all purchases, along with other
+details for specific purchases, we could use a subquery as follows:
+
+```sql
+SELECT user_handle, sku, (
+  SELECT AVG(quantity) FROM Purchases
+) FROM Purchases;
+
+             user_handle              |                 sku                  |        avg
+--------------------------------------+--------------------------------------+--------------------
+ 649e9396-1cb0-43dd-a907-7dc6fd23ddc7 | bb2cefa3-a509-4b1a-82c8-e6932ab4ce46 | 3.0000000000000000
+ 1c662040-f4dd-4188-9a93-692bee9b2888 | cc7f43e0-0bb3-4df6-9cbc-19f99f2dd82c | 3.0000000000000000
+(2 rows)
+```
+
+`3` is not the average order size for each row... it's the average order size
+for the entire table.
