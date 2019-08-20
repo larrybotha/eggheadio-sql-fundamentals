@@ -57,7 +57,7 @@ Notes and annotations from Egghead's SQL Fundamentals course: [https://egghead.i
   - [`FULL [OUTER] JOIN`](#full-outer-join)
   - [`CROSS JOIN`](#cross-join)
   - [Querying by column name in joins](#querying-by-column-name-in-joins)
-- [11. Subquery Dynamic Datasets in SQL](#11-subquery-dynamic-datasets-in-sql)
+- [12. Subquery Dynamic Datasets in SQL](#12-subquery-dynamic-datasets-in-sql)
   - [Subqueries for updating rows](#subqueries-for-updating-rows)
   - [Subqueries in joins](#subqueries-in-joins)
   - [Retrieving a subquery as a column in a query](#retrieving-a-subquery-as-a-column-in-a-query)
@@ -1421,7 +1421,7 @@ SELECT u.user_handle FROM Users AS u
 (2 rows)
 ```
 
-## 11. Subquery Dynamic Datasets in SQL
+## 12. Subquery Dynamic Datasets in SQL
 
 Subqueries allow one to make a query within a query. Subqueries are often
 interchangeable with joins, and the initial decision between using a join vs a
